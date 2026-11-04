@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tu ROAS real — Juanfe León</title>
+<meta name="description" content="Meta te muestra un ROAS. Entre lo que no se entrega, lo que se devuelve y el IVA, el de verdad es otro. Calculalo en quince segundos.">
+<meta property="og:title" content="Tu ROAS real">
+<meta property="og:description" content="Meta te muestra un ROAS. El de verdad es otro.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --paper:#f6f6f4; --raised:#ffffff; --ink:#0e0e10; --muted:#5b5b63;
+  --line:#d9d9de; --accent:#1f3dff; --on-accent:#fff;
+  --marker:#ffe033; --on-marker:#0e0e10; --signal:#d12e14; --band:#ecebe7;
+  --ok:#1a7f37;
+  --display:"Archivo","Arial Black",system-ui,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#0e0e10; --raised:#1a1a1e; --ink:#f6f6f4; --muted:#a2a2aa;
+  --line:#2e2e34; --accent:#7a8cff; --on-accent:#0e0e10;
+  --signal:#ff6a4d; --band:#17171b; --ok:#5fc97a; color-scheme:dark;
+}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:clamp(34px,7.4vw,62px);font-weight:900;letter-spacing:-.045em;line-height:.94}
+h2{font-size:clamp(20px,3vw,27px);font-weight:900;letter-spacing:-.03em;line-height:1.05}
+h3{font-size:14px;font-weight:800}
+p{margin:0}
+.kicker{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.stack{display:flex;flex-direction:column}
+.g1{gap:8px}.g2{gap:16px}.g3{gap:26px}
+.muted{color:var(--muted)}
+header{background:var(--band);padding-block:clamp(36px,6vw,64px)}
+section{padding-block:clamp(32px,5vw,54px)}
+.lede{font-size:clamp(16px,2vw,19px);line-height:1.45;max-width:56ch}
+fieldset{border:1px solid var(--line);background:var(--raised);padding:16px;margin:0;min-width:0}
+legend{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);padding:0 6px;margin-left:-6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:16px}
+.f{display:grid;grid-template-columns:1fr 122px;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+fieldset .f:last-of-type{border-bottom:0;padding-bottom:0}
+.f label{font-size:13.5px;line-height:1.3;min-width:0}
+.f .hint{display:block;font-size:11.5px;color:var(--muted);line-height:1.3;margin-top:2px}
+input[type=number]{width:100%;font-family:var(--mono);font-size:13px;padding:7px 8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:0;text-align:right;font-variant-numeric:tabular-nums}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chk{display:flex;gap:11px;align-items:flex-start;padding-top:10px;border-top:1px solid var(--line);margin-top:4px}
+.chk input{width:21px;height:21px;accent-color:var(--accent);margin:0;flex:none}
+.chk span{font-size:13px;line-height:1.35}
+/* resultado */
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+@media (max-width:620px){.hero{grid-template-columns:1fr}}
+.hero>div{background:var(--raised);padding:22px 18px;min-width:0}
+.hero .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block}
+.hero .v{font-family:var(--display);font-size:clamp(46px,11vw,76px);font-weight:900;letter-spacing:-.055em;line-height:.88;display:block;margin-top:8px;font-variant-numeric:tabular-nums}
+.hero .sub{font-size:12.5px;color:var(--muted);line-height:1.4;display:block;margin-top:9px}
+.hero .fake .v{color:var(--muted)}
+.hero .real .v{color:var(--accent)}
+.hero .real.bad .v{color:var(--signal)}
+/* escalera */
+.stairs{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--raised)}
+.st{display:grid;grid-template-columns:150px 1fr 74px;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line)}
+.st:last-child{border-bottom:0}
+@media (max-width:560px){.st{grid-template-columns:1fr 60px;gap:5px 10px}.st .bar{grid-column:1/3;order:3}}
+.st .t{font-size:13px;line-height:1.3;min-width:0}
+.st .t small{display:block;font-size:11px;color:var(--muted)}
+.st .bar{height:16px;background:var(--band);position:relative;min-width:0}
+.st .bar i{display:block;height:100%;background:var(--accent);transition:width .18s ease}
+.st.last .bar i{background:var(--ink)}
+.st .n{font-family:var(--mono);font-size:15px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.verd{border-left:3px solid var(--accent);padding-left:15px}
+.verd.bad{border-left-color:var(--signal)}
+.verd p{font-size:14.5px;line-height:1.5}
+.lost{font-family:var(--display);font-size:clamp(26px,5vw,40px);font-weight:900;letter-spacing:-.04em;color:var(--signal);font-variant-numeric:tabular-nums;line-height:1}
+.btn{font-family:var(--mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;background:none;border:1px solid var(--line);color:var(--muted);padding:8px 13px;cursor:pointer;align-self:flex-start}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+footer{border-top:1px solid var(--line);padding-block:26px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);line-height:1.8}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap stack g2">
+    <p class="kicker">Recurso · @juanfleonleon</p>
+    <h1>Tu ROAS real</h1>
+    <p class="lede">Meta te muestra un número. Entre los pedidos que no se entregan, los que se devuelven y el IVA que nunca fue tuyo, el de verdad es otro. Abre con el caso de una marca que creía tener 5,54.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap stack g3">
+    <div class="grid2">
+      <fieldset>
+        <legend>Lo que ves en el panel</legend>
+        <div class="f"><label for="venta">Venta que te atribuye Meta<small class="hint">En el período que estés mirando</small></label><input type="number" id="venta" value="277000000" min="0" step="100000"></div>
+        <div class="f"><label for="pauta">Inversión en pauta<small class="hint">El mismo período</small></label><input type="number" id="pauta" value="50000000" min="1" step="100000"></div>
+        <div class="f"><label for="ber">Tu break-even ROAS<small class="hint">Para comparar. Si no lo sabés, dejalo en 0</small></label><input type="number" id="ber" value="2.19" min="0" step="0.01"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Lo que el panel no sabe</legend>
+        <div class="f"><label for="pctNo">Pedidos que no se entregan (%)<small class="hint">Contraentrega rechazada, nadie recibe, dirección mala</small></label><input type="number" id="pctNo" value="25" min="0" max="100" step="0.5"></div>
+        <div class="f"><label for="pctDev">Devoluciones (%)<small class="hint">Sobre los que sí se entregaron</small></label><input type="number" id="pctDev" value="10" min="0" max="100" step="0.5"></div>
+        <div class="f"><label for="ivaTasa">IVA (%)</label><input type="number" id="ivaTasa" value="19" min="0" max="50" step="0.5"></div>
+        <label class="chk"><input type="checkbox" id="ivaInc"><span>Mis precios incluyen IVA, o sea que ese porcentaje lo recaudo y lo giro</span></label>
+      </fieldset>
+    </div>
+
+    <button class="btn" id="reset" type="button">Volver a los números del caso</button>
+  </div>
+</section>
+
+<section style="background:var(--band)">
+  <div class="wrap stack g3">
+    <div class="hero">
+      <div class="fake"><span class="l">Lo que dice Meta</span><span class="v" id="vFake">—</span><span class="sub" id="sFake">—</span></div>
+      <div class="real" id="boxReal"><span class="l">Lo que de verdad te vuelve</span><span class="v" id="vReal">—</span><span class="sub" id="sReal">—</span></div>
+    </div>
+
+    <div class="stack g2">
+      <h2>Dónde se cae</h2>
+      <div class="stairs" id="stairs"></div>
+    </div>
+
+    <div class="stack g1">
+      <p class="kicker">La diferencia, en plata</p>
+      <p class="lost" id="lost">—</p>
+      <p class="muted" style="font-size:13.5px" id="lostSub">—</p>
+    </div>
+
+    <div class="verd" id="verd"><p>—</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap stack g2">
+    <h2>Por qué importa tanto</h2>
+    <p class="lede muted">Si subís presupuesto mirando el número de Meta, estás escalando sobre una venta que en parte nunca entró. El caso con el que abre esta página facturó 277 millones en mes y medio y terminó con cuatro de utilidad: el 25% que no se entregaba se lo estaba comiendo todo, y en el panel se veía un 5,54 espectacular.</p>
+    <p class="lede muted">Dos cosas que vale la pena mirar después de esto: tu porcentaje real de entregas de los últimos 90 días, no de los últimos 7; y si tu break-even está calculado sobre el precio con IVA o sin él.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Juanfe León · @juanfleonleon</p>
+    <p>Caso real, cifras redondeadas, marca anónima · noviembre 2026</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var ids=['venta','pauta','ber','pctNo','pctDev','ivaTasa'];
+  var DEF={venta:277000000,pauta:50000000,ber:2.19,pctNo:25,pctDev:10,ivaTasa:19};
+  var fmt=new Intl.NumberFormat('es-CO',{maximumFractionDigits:0});
+  var KEY='roas-real-v1';
+  function v(id){var n=parseFloat(document.getElementById(id).value);return isFinite(n)?n:0;}
+  function money(n){return (n<0?'−':'')+'$'+fmt.format(Math.abs(Math.round(n)));}
+
+  function render(){
+    var venta=v('venta'), pauta=Math.max(v('pauta'),1), ber=v('ber');
+    var pctNo=v('pctNo'), pctDev=v('pctDev'), ivaTasa=v('ivaTasa');
+    var ivaInc=document.getElementById('ivaInc').checked;
+
+    var vEntregada=venta*(1-pctNo/100);
+    var vFinal=vEntregada*(1-pctDev/100);
+    var vNeta=ivaInc?vFinal/(1+ivaTasa/100):vFinal;
+
+    var rFake=venta/pauta, rEnt=vEntregada/pauta, rFin=vFinal/pauta, rReal=vNeta/pauta;
+
+    document.getElementById('vFake').textContent=rFake.toFixed(2);
+    document.getElementById('sFake').textContent='Sobre '+money(venta)+' de venta atribuida';
+    document.getElementById('vReal').textContent=rReal.toFixed(2);
+    document.getElementById('sReal').textContent='Sobre '+money(vNeta)+' que de verdad te quedan';
+
+    var box=document.getElementById('boxReal');
+    box.className='real'+(ber>0&&rReal<ber?' bad':'');
+
+    var steps=[
+      ['Lo que dice Meta','Venta atribuida en el panel',rFake,venta,false],
+      ['Menos lo que no se entrega',pctNo.toFixed(1)+'% de los pedidos',rEnt,vEntregada,false],
+      ['Menos las devoluciones',pctDev.toFixed(1)+'% de los entregados',rFin,vFinal,false]
+    ];
+    if(ivaInc) steps.push(['Menos el IVA','El '+ivaTasa+'% que recaudás y giras',rReal,vNeta,false]);
+    steps[steps.length-1][4]=true;
+
+    var max=Math.max(rFake,0.0001), html='';
+    steps.forEach(function(s){
+      var pct=Math.max(0,Math.min(100,s[2]/max*100));
+      html+='<div class="st'+(s[4]?' last':'')+'"><div class="t">'+s[0]+'<small>'+s[1]+'</small></div>'
+          +'<div class="bar"><i style="width:'+pct.toFixed(1)+'%"></i></div>'
+          +'<div class="n">'+s[2].toFixed(2)+'</div></div>';
+    });
+    document.getElementById('stairs').innerHTML=html;
+
+    var perdida=venta-vNeta;
+    document.getElementById('lost').textContent=money(perdida);
+    document.getElementById('lostSub').textContent='Es la venta que el panel te cuenta y tu cuenta bancaria no. Equivale a '+(perdida/venta*100).toFixed(1)+'% de todo lo que facturaste en el período.';
+
+    var vd=document.getElementById('verd'), p=vd.querySelector('p');
+    if(ber<=0){
+      vd.className='verd';
+      p.innerHTML='<strong>Te falta el dato más importante.</strong> Sin tu break-even ROAS, un 3,74 no te dice si estás ganando o perdiendo: depende enteramente de tu margen. Calculalo antes de tocar presupuestos.';
+    } else if(rReal<ber){
+      vd.className='verd bad';
+      p.innerHTML='<strong>Estás por debajo de tu break-even.</strong> Tu ROAS real es '+rReal.toFixed(2)+' y necesitás '+ber.toFixed(2)+' solo para no perder. Cada peso que le metas a la pauta en estas condiciones te saca plata del bolsillo, aunque el panel diga '+rFake.toFixed(2)+'.';
+    } else if(rReal<ber*1.3){
+      vd.className='verd bad';
+      p.innerHTML='<strong>Estás apenas encima.</strong> '+rReal.toFixed(2)+' contra un break-even de '+ber.toFixed(2)+': el margen que te separa de perder plata es muy delgado. Antes de subir presupuesto, bajá el porcentaje que no se entrega — es la palanca más barata que tenés.';
+    } else {
+      vd.className='verd';
+      p.innerHTML='<strong>Hay espacio.</strong> '+rReal.toFixed(2)+' contra un break-even de '+ber.toFixed(2)+'. Podés empujar, siempre que el inventario y la caja aguanten el volumen. Pero escalá mirando este número, no el '+rFake.toFixed(2)+' del panel.';
+    }
+
+    try{localStorage.setItem(KEY,JSON.stringify({venta:venta,pauta:pauta,ber:ber,pctNo:pctNo,pctDev:pctDev,ivaTasa:ivaTasa,ivaInc:ivaInc}));}catch(e){}
+  }
+
+  ids.forEach(function(id){document.getElementById(id).addEventListener('input',render);});
+  document.getElementById('ivaInc').addEventListener('change',render);
+  document.getElementById('reset').addEventListener('click',function(){
+    ids.forEach(function(id){document.getElementById(id).value=DEF[id];});
+    document.getElementById('ivaInc').checked=false;
+    try{localStorage.removeItem(KEY);}catch(e){}
+    render();
+  });
+
+  try{
+    var s=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(s){ids.forEach(function(id){if(typeof s[id]==='number')document.getElementById(id).value=s[id];});
+      document.getElementById('ivaInc').checked=!!s.ivaInc;}
+  }catch(e){}
+
+  render();
+})();
+</script>
+</body>
+</html>
